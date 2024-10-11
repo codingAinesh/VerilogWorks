@@ -44,15 +44,45 @@ reg [size:0] buf_mem[locations-1:0];
       end 
     end 
 //BUFFER OUTPUT LOGIC
-  always@(posedge clk or posedge rst) //yet to come, last edit 11/10/24, 2:16
+  always@(posedge clk or posedge rst) 
     begin 
-
-
+      if(rst)       //active low rst
+        buf_out<= 0;
+      else if(rd_en && !buf_empty) //if read operation is enabled and buffer is not empty 
+        buf_out<= buf_mem[rd_ptr];  //at buffer output, position of read pointer is taken into consideration such that the bit @ the position is inserted into buffer out
+      else if 
+        begin 
+          if (wr_en && !buf_full) //if write operation is enabled and buffer is not full
+            buf_mem[wr_ptr]<= buf_in; //input at buffer is inserted into buffer memory @ the position of write pointer 
+        end 
+      else 
+        buf_out<= buf_out;
     end 
-//POINTER LOGIC  //yet to come, last edit 11/10/24, 2:16
 
-  
+
+//POINTER LOGIC  
+always@(posedge clk or posedge rst) 
+  if(rst)     //active low reset
+    rd_ptr<= 0;   //both the pointers are reset 
+    wr_ptr<= 0;
+  else begin 
+    if (wr_en && !buf_full) //if write operation is enabled and buffer is not full 
+      wr_ptr<= wr_ptr+1;    //next bit to be written into the buffer 
+    else
+      wr_ptr<= wr_ptr;    //write operation is not enabled and buffer is full 
+                          //(or) write operation is enabled and buffer is full
+                          //(or) write operation is not enabled and buffer is not full
+    
+    if (rd_en && !buf_empty)  //read operation is not enabled and buffer is not empty 
+      rd_ptr<= rd_ptr+1;
+    else 
+      rd_ptr<= rd_ptr;
+    end 
+  end
 
 endmodule 
+
+
+
 
 
